@@ -1,0 +1,789 @@
+ <!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Bubbly x Wolfy — Love Quiz</title>
+  <style>
+    :root{
+      --bg:#0b0b10;
+      --muted:#a8a8b3;
+      --text:#f4f4f6;
+      --accent:#ff4d8d;
+      --accent2:#7c5cff;
+      --good:#2ee59d;
+      --bad:#ff5c7a;
+      --stroke:rgba(255,255,255,.10);
+      --shadow: 0 20px 70px rgba(0,0,0,.45);
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--text);
+      background:
+        radial-gradient(900px 500px at 20% 10%, rgba(124,92,255,.24), transparent 60%),
+        radial-gradient(800px 500px at 90% 20%, rgba(255,77,141,.22), transparent 55%),
+        radial-gradient(900px 600px at 60% 95%, rgba(46,229,157,.12), transparent 60%),
+        var(--bg);
+      min-height:100svh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px 12px;
+    }
+    .app{ width:min(520px, 100%); }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--stroke);
+      box-shadow:var(--shadow);
+      border-radius:var(--radius);
+      overflow:hidden;
+    }
+    .inner{ padding:18px; }
+    .topbar{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 16px;
+      border-bottom:1px solid var(--stroke);
+      background: rgba(0,0,0,.12);
+    }
+    .brand{ display:flex; flex-direction:column; gap:2px; line-height:1.1; }
+    .brand .title{ font-weight:800; letter-spacing:.2px; }
+    .brand .sub{ font-size:12px; color:var(--muted); }
+    .pill{
+      font-size:12px;
+      color:var(--muted);
+      border:1px solid var(--stroke);
+      padding:6px 10px;
+      border-radius:999px;
+      background: rgba(0,0,0,.18);
+      white-space:nowrap;
+    }
+    .progressWrap{ padding:10px 16px 0 16px; display:none; }
+    .progressText{
+      display:flex; justify-content:space-between;
+      font-size:12px; color:var(--muted); margin-bottom:8px;
+    }
+    .progress{
+      height:8px; border-radius:999px; background: rgba(255,255,255,.07);
+      overflow:hidden; border:1px solid var(--stroke);
+    }
+    .bar{
+      height:100%; width:0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius:999px;
+      transition: width .35s ease;
+    }
+
+    h1{ font-size:24px; margin:0 0 10px 0; }
+    .qTitle{ font-size:18px; margin-bottom:10px; font-weight:800; }
+    p{ margin:0 0 12px 0; color:var(--muted); line-height:1.45; }
+    .center{ text-align:center; }
+
+    .btnRow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; justify-content:center; }
+    button{
+      appearance:none;
+      border:1px solid var(--stroke);
+      background: rgba(0,0,0,.16);
+      color:var(--text);
+      padding:12px 14px;
+      border-radius:14px;
+      font-weight:700;
+      cursor:pointer;
+    }
+    button.primary{
+      background: linear-gradient(90deg, rgba(255,77,141,.92), rgba(124,92,255,.92));
+      border-color: rgba(255,255,255,.18);
+    }
+    button.ghost{ background: rgba(0,0,0,.10); }
+    button:disabled{ opacity:.5; cursor:not-allowed; }
+
+    .tag{
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:12px; color:var(--muted);
+      border:1px solid var(--stroke);
+      background: rgba(0,0,0,.16);
+      padding:6px 10px;
+      border-radius:999px;
+      margin-bottom:10px;
+    }
+
+    .options{ display:flex; flex-direction:column; gap:10px; margin-top:12px; }
+    .opt{
+      text-align:left; width:100%;
+      padding:13px 14px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background: rgba(0,0,0,.16);
+      color:var(--text);
+      font-weight:700;
+    }
+
+    .input{
+      width:100%;
+      padding:14px 14px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background: rgba(0,0,0,.18);
+      color:var(--text);
+      font-size:16px;
+      outline:none;
+    }
+    .hint{ margin-top:8px; font-size:12px; color:var(--muted); }
+
+    .overlay{
+      position:fixed; inset:0;
+      display:none; align-items:flex-end; justify-content:center;
+      padding:16px 12px;
+      background: rgba(0,0,0,.45);
+      backdrop-filter: blur(6px);
+      z-index:10;
+    }
+    .overlay.show{ display:flex; }
+    .revealCard{
+      width:min(520px, 100%);
+      border-radius:18px;
+      border:1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(18,18,26,.96), rgba(10,10,15,.96));
+      box-shadow: 0 20px 80px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .revealTop{
+      padding:14px 16px;
+      border-bottom:1px solid var(--stroke);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .badge{
+      font-size:12px; font-weight:900;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(0,0,0,.2);
+      white-space:nowrap;
+    }
+    .badge.good{ color: var(--good); }
+    .badge.bad{ color: var(--bad); }
+    .revealBody{ padding:14px 16px 16px 16px; }
+    .revealBody .big{ font-size:16px; font-weight:900; margin-bottom:8px; }
+    .revealBody .small{ color:var(--muted); white-space:pre-line; }
+/* --- Photo reward (polaroid) --- */
+.polaroid {
+  margin-top: 12px;
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(0,0,0,.20);
+}
+.polaroidTop {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-bottom:1px solid var(--stroke);
+  color:var(--muted);
+  font-size:12px;
+}
+.polaroidImg {
+  width:100%;
+  display:block;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+.polaroidCap {
+  padding:12px;
+  background: rgba(0,0,0,.10);
+}
+.polaroidCap strong {
+  display:block;
+  font-size:13px;
+  color:var(--text);
+  margin-bottom:4px;
+}
+.polaroidCap span {
+  font-size:12px;
+  color:var(--muted);
+}
+
+/* --- Fullscreen photo viewer --- */
+.photoViewer{
+  position:fixed;
+  inset:0;
+  background: rgba(0,0,0,.92);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:30;
+  padding:18px 12px;
+}
+.photoViewer.show{ display:flex; }
+.photoViewer img{
+  width:min(900px, 100%);
+  max-height: 90svh;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.12);
+  object-fit:contain;
+}
+.photoViewer .close{
+  position:fixed;
+  top:14px; right:14px;
+  border-radius:999px;
+  padding:10px 12px;
+  font-weight:900;
+}
+
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="card">
+      <div class="topbar">
+        <div class="brand">
+          <div class="title">Bubbly × Wolfy</div>
+          <div class="sub">Love Quiz — Spicy Edition</div>
+        </div>
+        <div class="pill" id="statusPill">Listo ✅</div>
+      </div>
+
+      <div class="progressWrap" id="progressWrap">
+        <div class="progressText">
+          <span id="progressLabel">Pregunta 1/12</span>
+          <span id="progressMini">0%</span>
+        </div>
+        <div class="progress"><div class="bar" id="bar"></div></div>
+      </div>
+
+      <div class="inner" id="screen"></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay" aria-hidden="true">
+    <div class="revealCard">
+      <div class="revealTop">
+        <div class="badge" id="revealBadge">✅</div>
+        <button class="ghost" id="continueBtn">Continuar</button>
+      </div>
+      <div class="revealBody">
+  <div class="big" id="revealBig">—</div>
+  <div class="small" id="revealSmall">—</div>
+
+  <!-- Photo reward (hidden unless unlocked) -->
+  <div class="polaroid" id="polaroid" style="display:none;">
+    <div class="polaroidTop">
+      <span id="polaroidTopText">📸 Recuerdo desbloqueado</span>
+      <span>tap para ampliar</span>
+    </div>
+    <img class="polaroidImg" id="polaroidImg" alt="Recuerdo" />
+    <div class="polaroidCap">
+      <strong id="polaroidTitle">—</strong>
+      <span id="polaroidCaption">—</span>
+    </div>
+  </div>
+</div>
+
+    </div>
+  </div>
+<!-- Fullscreen photo viewer -->
+<div class="photoViewer" id="photoViewer" aria-hidden="true">
+  <button class="ghost close" id="closePhoto">Cerrar ✕</button>
+  <img id="photoBig" alt="Foto" />
+</div>
+
+<script>
+/* ========== CONFIG ========== */
+/* ========== PHOTO REWARDS ========== */
+const photoMap = {
+  1: { file: "photo1.jpeg", title: "Nosotros", caption: "Un momento simple. Sin contexto. Solo nosotros."},
+  2: { file: "photo2.jpeg", title: "Andorra", caption: "Modo princesa vs modo montaña 👑🏔️" },
+  3: { file: "photo3.jpeg", title: "Piemonte", caption: "Italia nos queda muy bien 🍷" },
+  4: { file: "photo4.jpeg", title: "Nosotros", caption: "Historias raras, amor real." },
+  5: { file: "photo5.jpeg", title: "Sitcom", caption: "No somos normales. Por suerte." },
+  6: { file: "photo6.jpeg", title: "Final", caption: "Regalo desbloqueado 💘" }
+};
+
+const ANDORRA_MUY = "RELLENA_AQUI";             // TODO: fill this
+const SARNA_REACTION_CORRECT_INDEX = 3;         // TODO: 0..3
+
+/* ========== DATA ========== */
+const quiz = [
+  { id:1, type:"text", act:"Origen", tag:"🔥 Modo micro-memoria",
+    prompt:"La primera noche, ¿qué frase EXACTA dijiste que ahora es irónica?",
+    hint:"Tu wording exacto (y emojis si existieron 😈).", score:"soft",
+    reveal:{ correctTitle:"✅ Vale. Esto es demasiado real.",
+             correctText:"No hay respuesta objetiva… pero suena MUY Bubbly.",
+             wrongTitle:"😈 Me escondes la verdad…",
+             wrongText:"Te perdono. Igual: esa frase inició una historia." } },
+
+  { id:2, 
+ type:"mcq", act:"Origen", tag:"🎵 Momento Mon Amour", unlockPhoto: 1,
+
+    prompt:"Completa la frase real de “Mon Amour (Remix)” (Aitana × Zzoilo):\n“Mon amour, je t’aime, ____”",
+    options:["aunque me cueste perder","yo te lo juro esta vez","como nadie te va a querer","pero no sé qué hacer"],
+    correctIndex:0, // TODO: set this to the real one
+    reveal:{ correctTitle:"🎶 Correcto.", correctText:"Ok… fan real. Wolfy aprueba.",
+             wrongTitle:"😏 Casi…", wrongText:"No pasa nada. La ponemos otra vez 😈" } },
+
+{ 
+  id:3,
+  type:"mcq",
+  act:"Montjuïc",
+  tag:"🌿 Montjuïc · Trauma edition",
+  prompt:"¿Cómo se llamaba el ácaro que nos picó en Montjuïc?",
+  options:[
+    "Chigger mites",
+    "Dust mites",
+    "Scabies mites",
+    "Bed bugs"
+  ],
+  correctIndex: 0,
+  reveal:{
+    correctTitle:"🦠 Exacto. Nivel experto en bichos.",
+    correctText:"Quién nos iba a decir que Montjuïc nos regalaría recuerdos… y chigger mites.",
+    wrongTitle:"😈 Noooo… casi.",
+    wrongText:"Era peor de lo que suena. Chigger mites. Trauma desbloqueado."
+  }
+},
+
+
+
+  { id:4, type:"mcq", act:"Montjuïc", tag:"🎵 Momento Mon Amour", unlockPhoto: 2,
+
+    prompt:"¿Quién canta la primera parte de “Mon Amour (Remix)”?",
+    options:["Aitana","Zzoilo","Los dos","Un invitado"], correctIndex:0,
+    reveal:{ correctTitle:"✅ Fácil para ti.", correctText:"Oído fino.",
+             wrongTitle:"😈 Noooo…", wrongText:"Ok te lo perdono… por ahora." } },
+
+  {
+  id: 5,
+  type: "mcq",
+  act: "Dinámica",
+  tag: "🎭 Drama level",
+  prompt: "En nuestra relación, ¿quién suele dramatizar más las cosas?",
+  options: [
+    "Tú",
+    "Yo",
+    "Los dos",
+    "Depende del día"
+  ],
+  correctIndex: 0,
+  reveal: {
+    correctTitle: "🎭 Exacto.",
+    correctText: "Y lo dices con orgullo. Un poco de drama le da sabor a la vida 😈",
+    wrongTitle: "😏 No exactamente…",
+    wrongText: "Sabes que en el fondo… eres tú. Pero te quiero igual."
+  }
+},
+
+
+{
+  id: 6,
+  type: "mcq",
+  act: "Andorra",
+  tag: "🏔️ Andorra · expectativas vs realidad",
+unlockPhoto: 3,
+
+  prompt: "¿Por qué al final no hicimos ninguna ruta de senderismo en Andorra?",
+  options: [
+    "Porque mi cerebro dijo: princesa → no hiking",
+    "Porque alguien daba fuertes vibes de spa y batas blancas",
+    "Porque te subestimé… y sobrestimé tu amor por el spa",
+    "Porque pensé con el corazón y no con las botas"
+  ],
+  correctIndex: 0,
+  reveal: {
+    correctTitle: "😅 Exacto.",
+    correctText: "Tenía otra idea del finde, no te voy a mentir...",
+    wrongTitle: "😈 Mmm… casi.",
+    wrongText: "Tenía otra idea del finde, no te voy a mentir..."
+  }
+},
+
+
+  {
+  id: 7,
+  type: "mcq",
+  act: "Andorra",
+  tag: "🍾 Expectativas rotas",
+  prompt: "¿Qué fue lo que más me sorprendió de ti en Andorra?",
+  options: [
+    "Tu buen gusto en champagne",
+    "Lo poco que te gusta ir de compras (claramente)",
+    "Lo bien que te adaptaste al plan improvisado",
+    "Que no eras tan princesa como yo pensaba"
+  ],
+  correctIndex: 1,
+  reveal: {
+    correctTitle: "😏 Exacto.",
+    correctText: "Nadie esperaba semejante amor por las tiendas. Especialmente yo.",
+    wrongTitle: "😈 Mmm… interesante elección.",
+    wrongText: "Todas son verdad, pero hay una que sigue siendo motivo de debate eterno."
+  }
+},
+
+
+  { id:8, type:"mcq", act:"Trauma bonding", tag:"🧪 Trauma bonding", unlockPhoto: 4,
+
+    prompt:"Cuando entendimos que era sarna, nuestra reacción más real fue…",
+    options:["Pánico total","Risa nerviosa","Negación (“no puede ser”)","“Bueno… al menos esto es una historia para siempre”"],
+    correctIndex:SARNA_REACTION_CORRECT_INDEX,
+    reveal:{ correctTitle:"💀 Sí. Literalmente eso.", correctText:"Ahí mismo entendimos que esto ya era algo nuestro.",
+             wrongTitle:"😈 Casi…", wrongText:"La real fue aún más ridícula. Por eso te amo." } },
+
+{
+  id: 9,
+  type: "mcq",
+  act: "Trauma bonding",
+  tag: "🧠 Nivel experto",
+  prompt: "Nuestra relación demuestra que podemos sobrevivir a:",
+  options: [
+    "Cualquier cosa",
+    "Viajes mal preparados",
+    "Experiencias dermatológicas inesperadas",
+    "Todo lo anterior"
+  ],
+  correctIndex: 3,
+  reveal: {
+    correctTitle: "😌 Exactamente.",
+    correctText: "Nada como pasar pruebas absurdas juntos para confirmar que esto va en serio.",
+    wrongTitle: "😈 Mmm… te falta una.",
+    wrongText: "La respuesta correcta era: todo. Claramente TODO."
+  }
+},
+
+
+  {
+  id: 10,
+  type: "mcq",
+  act: "Experiencias",
+  tag: "😈 Nivel sitcom", unlockPhoto: 5,
+
+  prompt: "Si alguien escuchara nuestras historias, pensaría que:",
+  options: [
+    "Tenemos muy mala suerte",
+    "Exageramos bastante",
+    "Vivimos demasiado intensamente",
+    "Todo eso junto"
+  ],
+  correctIndex: 3,
+  reveal: {
+    correctTitle: "😏 Exactamente.",
+    correctText: "Un poco de mala suerte, un poco de intensidad… y muchas anécdotas imposibles de inventar.",
+    wrongTitle: "😈 Te falta contexto.",
+    wrongText: "La respuesta correcta era claramente: todo eso junto. Nuestra especialidad."
+  }
+},
+
+
+  { id:11, type:"mcq", act:"Emoción", tag:"🫀 Vulnerabilidad",
+    prompt:"¿Qué miedo tenía yo al principio contigo?",
+    options:["Enamorarme demasiado","Que no durara","Que fuera solo físico","Que me rompieras el corazón"],
+    correctIndex:1,
+    reveal:{ correctTitle:"✅ Sí…", correctText:"Y mira. Aquí estamos.",
+             wrongTitle:"😅 No exactamente…", wrongText:"Te lo cuento al final 😉" } },
+
+  { id:12, type:"text", act:"Final", tag:"🎁 Final Boss", unlockPhoto: 6,
+
+    prompt:"Si esa noche solo iba a ser una, ¿por qué sigo aquí 8 meses después?",
+    hint:"Dilo como lo sientes.", score:"soft",
+    reveal:{ correctTitle:"❤️ Porque no eras una noche.", correctText:"Eras una historia.",
+             wrongTitle:"😈 No me esquives…", wrongText:"El final te va a gustar." } },
+];
+
+/* ========== SAFE STORAGE (won’t block Start) ========== */
+const STORAGE_KEY = "bubbly_wolfy_quiz_v1";
+let _memoryStore = null;
+
+function saveState(){
+  /* saving disabled — fresh quiz every time */
+}
+
+function loadState(){
+  return null;
+}
+
+function clearState(){
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
+  _memoryStore = null;
+}
+
+/* ========== STATE ========== */
+let state = { step:0, score:0, answers:{}, unlockedPhotos: [], finished:false };
+
+const $ = (id) => document.getElementById(id);
+const screen = $("screen");
+const overlay = $("overlay");
+const revealBadge = $("revealBadge");
+const revealBig = $("revealBig");
+const revealSmall = $("revealSmall");
+const continueBtn = $("continueBtn");
+const progressWrap = $("progressWrap");
+const progressLabel = $("progressLabel");
+const progressMini = $("progressMini");
+const bar = $("bar");
+const statusPill = $("statusPill");
+// Photo reward elements
+const polaroid = $("polaroid");
+const polaroidImg = $("polaroidImg");
+const polaroidTopText = $("polaroidTopText");
+const polaroidTitle = $("polaroidTitle");
+const polaroidCaption = $("polaroidCaption");
+
+const photoViewer = $("photoViewer");
+const photoBig = $("photoBig");
+const closePhoto = $("closePhoto");
+
+closePhoto.addEventListener("click", () => {
+  photoViewer.classList.remove("show");
+  photoViewer.setAttribute("aria-hidden","true");
+});
+photoViewer.addEventListener("click", (e) => {
+  // si on clique sur le fond noir (et pas sur l'image), on ferme
+  if (e.target === photoViewer) {
+    photoViewer.classList.remove("show");
+    photoViewer.setAttribute("aria-hidden","true");
+  }
+});
+
+
+continueBtn.addEventListener("click", () => {
+  // Ferme le viewer photo si ouvert
+  photoViewer.classList.remove("show");
+  photoViewer.setAttribute("aria-hidden","true");
+
+  // Ferme l'overlay reveal
+  overlay.classList.remove("show");
+  overlay.setAttribute("aria-hidden","true");
+
+  // Cache la polaroid pour éviter interactions résiduelles
+  if (polaroid) {
+    polaroid.style.display = "none";
+    polaroid.onclick = null;
+  }
+
+  nextStep();
+});
+
+
+function normalize(s){
+  return (s ?? "").toString().trim().toLowerCase().replace(/\s+/g," ");
+}
+function escapeHtml(s){
+  return (s ?? "").toString()
+    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+
+function setProgress(){
+  if (state.step <= 0 || state.step > quiz.length){
+    progressWrap.style.display = "none";
+    return;
+  }
+  progressWrap.style.display = "block";
+  progressLabel.textContent = `Pregunta ${state.step}/${quiz.length}`;
+  progressMini.textContent = `${Math.round((state.step-1)/quiz.length*100)}%`;
+  bar.style.width = `${Math.round(state.step/quiz.length*100)}%`;
+  statusPill.textContent = `Acto: ${quiz[state.step-1].act}`;
+}
+
+function renderCover(){
+  statusPill.textContent = "Listo ✅";
+  progressWrap.style.display = "none";
+  screen.innerHTML = `
+    <div class="center">
+      <h1>💘 Bubbly × Wolfy</h1>
+      <p>Este test no mide tu memoria.<br/><b>Mide cuánto vivimos cosas que nadie más entendería.</b></p>
+      <div class="tag">12 preguntas · 3–5 min · iPhone friendly</div>
+      <div class="btnRow">
+        <button class="primary" id="startBtn">Empezar 😈</button>
+        <button class="ghost" id="resetBtn">Reiniciar</button>
+      </div>
+    </div>
+  `;
+  $("startBtn").onclick = () => { state.step = 1; saveState(); render(); };
+  $("resetBtn").onclick = () => {
+  clearState();
+  state = { step:0, score:0, answers:{}, unlockedPhotos: [], finished:false };
+  render();
+};
+
+}
+
+function showReveal(correct, q, userAnswer){
+  revealBadge.textContent = correct ? "✅ Correcto" : "😈 Casi";
+  revealBadge.className = "badge " + (correct ? "good" : "bad");
+  revealBig.textContent = correct ? q.reveal.correctTitle : q.reveal.wrongTitle;
+  let t = correct ? q.reveal.correctText : q.reveal.wrongText;
+  if (q.type === "text" && userAnswer) t += `\n\nTu respuesta: “${userAnswer}”`;
+  revealSmall.textContent = t;
+  // --- Photo reward ---
+  if (polaroid) polaroid.style.display = "none";
+
+  if (q.unlockPhoto) {
+    const p = photoMap[q.unlockPhoto];
+    if (p && p.file) {
+      if (!state.unlockedPhotos.includes(q.unlockPhoto)) {
+        state.unlockedPhotos.push(q.unlockPhoto);
+        saveState();
+      }
+      polaroidTopText.textContent = `📸 Recuerdo desbloqueado (${state.unlockedPhotos.length}/6)`;
+      polaroidImg.src = p.file;
+      polaroidTitle.textContent = p.title || "Recuerdo";
+      polaroidCaption.textContent = p.caption || "";
+      polaroid.style.display = "block";
+
+polaroid.onclick = (e) => {
+  e.stopPropagation();
+  photoBig.src = p.file;
+  photoViewer.classList.add("show");
+  photoViewer.setAttribute("aria-hidden","false");
+};
+
+    }
+  }
+
+  overlay.classList.add("show");
+  overlay.setAttribute("aria-hidden","false");
+}
+
+function renderQuestion(){
+  const q = quiz[state.step-1];
+  setProgress();
+
+  const tagHtml = q.tag ? `<div class="tag">${escapeHtml(q.tag)}</div>` : "";
+  const hintHtml = q.hint ? `<div class="hint">${escapeHtml(q.hint)}</div>` : "";
+
+  let html = `
+    ${tagHtml}
+    <div class="qTitle">${escapeHtml(q.prompt).replaceAll("\n","<br/>")}</div>
+  `;
+
+  if (q.type === "mcq"){
+    html += `<div class="options">` + q.options.map((opt,i)=>
+      `<button class="opt" data-idx="${i}">${escapeHtml(opt)}</button>`
+    ).join("") + `</div>`;
+  } else {
+    const prev = state.answers[q.id]?.value ?? "";
+    html += `
+      <input class="input" id="textAnswer" placeholder="Escribe aquí…" value="${escapeHtml(prev)}"/>
+      ${hintHtml}
+      <div class="btnRow">
+        <button class="primary" id="confirmBtn">Confirmar</button>
+        <button class="ghost" id="backBtn" ${state.step<=1 ? "disabled":""}>Atrás</button>
+      </div>
+    `;
+  }
+
+  if (q.type === "mcq"){
+    html += `
+      <div class="btnRow">
+        <button class="ghost" id="backBtn" ${state.step<=1 ? "disabled":""}>Atrás</button>
+      </div>
+    `;
+  }
+
+  screen.innerHTML = html;
+
+  const backBtn = $("backBtn");
+  if (backBtn) backBtn.onclick = () => { if(state.step>1){ state.step--; saveState(); render(); } };
+
+  if (q.type === "mcq"){
+    [...screen.querySelectorAll(".opt")].forEach(btn=>{
+      btn.onclick = () => {
+        const idx = Number(btn.dataset.idx);
+        handleAnswer(q, { kind:"mcq", idx, value:q.options[idx] });
+      };
+    });
+  } else {
+    $("confirmBtn").onclick = () => {
+      const val = $("textAnswer").value.trim();
+      if (!val) return;
+      handleAnswer(q, { kind:"text", value:val });
+    };
+  }
+}
+
+function renderFinal(){
+  progressWrap.style.display = "none";
+  statusPill.textContent = "Fin 🎁";
+  const score = state.score;
+  const total = quiz.length;
+  const label = score<=4 ? "Nos estamos conociendo" : score<=8 ? "Somos peligrosamente compatibles" : "Esto ya no es casualidad, es destino";
+
+  const giftInstruction = "Mira debajo"; // TODO: personalize
+
+  screen.innerHTML = `
+    <div class="center">
+      <h1>🎁 Regalo desbloqueado</h1>
+      <p><b>${escapeHtml(label)}</b><br/>Puntuación: ${score}/${total}</p>
+      <div class="card" style="margin-top:14px; border-radius:18px;">
+        <div class="inner">
+          <p style="color:var(--text); margin:0;">
+            “La sorpresa real no estaba en el test.<br/>Estaba en lo que construimos sin darnos cuenta.”
+          </p>
+          <p style="margin-top:10px;">Ahora… <b style="color:var(--text)">${escapeHtml(giftInstruction)}</b></p>
+        </div>
+      </div>
+      <div class="btnRow">
+        <button class="primary" id="restartBtn">Repetir 😈</button>
+      </div>
+    </div>
+  `;
+  $("restartBtn").onclick = () => {
+  clearState();
+  state = { step:0, score:0, answers:{}, unlockedPhotos: [], finished:false };
+  render();
+};
+
+}
+
+function handleAnswer(q, ans){
+  state.answers[q.id] = ans;
+
+  let correct = true;
+  if (q.type === "mcq"){
+    correct = ans.idx === q.correctIndex;
+  } else if (q.score === "strict"){
+    correct = normalize(ans.value) === normalize(q.correctText);
+  } else {
+    correct = true;
+  }
+
+  // Score only MCQs + strict text
+  const alreadyScored = state.answers[q.id].scored === true;
+  if (!alreadyScored){
+    const shouldCount = (q.type === "mcq") || (q.type === "text" && q.score === "strict");
+    if (shouldCount && correct) state.score += 1;
+    state.answers[q.id].scored = true;
+  }
+
+  saveState();
+  showReveal(correct, q, ans.value);
+}
+
+function nextStep(){
+  if (state.step >= quiz.length){
+    state.finished = true;
+    saveState();
+    renderFinal();
+    return;
+  }
+  state.step += 1;
+  saveState();
+  render();
+}
+
+function render(){
+  if (!state.step || state.step === 0){ renderCover(); return; }
+  if (state.finished){ renderFinal(); return; }
+  renderQuestion();
+}
+
+render();
+</script>
+</body>
+</html>
